@@ -1,0 +1,171 @@
+{% load djicons i18n %}
+
+<div x-data="{
+    dragging: null,
+    dragOverStage: null,
+    panelOpen: false,
+    panelUrl: '',
+    csrfToken: '{{ csrf_token }}',
+
+    startDrag(e, leadId) {
+        this.dragging = leadId;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', leadId);
+        e.target.closest('.kanban-card').classList.add('kanban-card-dragging');
+    },
+
+    endDrag(e) {
+        this.dragging = null;
+        this.dragOverStage = null;
+        document.querySelectorAll('.kanban-card-dragging').forEach(el => {
+            el.classList.remove('kanban-card-dragging');
+        });
+    },
+
+    dragOver(e, stageId) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        this.dragOverStage = stageId;
+    },
+
+    dragLeave(e, stageId) {
+        if (this.dragOverStage === stageId) {
+            this.dragOverStage = null;
+        }
+    },
+
+    async drop(e, stageId) {
+        e.preventDefault();
+        const leadId = e.dataTransfer.getData('text/plain');
+        this.dragOverStage = null;
+        this.dragging = null;
+
+        if (!leadId || !stageId) return;
+
+        try {
+            const response = await fetch(`/m/leads/${leadId}/move/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `stage_id=${stageId}`,
+            });
+            const data = await response.json();
+            if (data.success) {
+                htmx.ajax('GET', '{% url 'leads:pipeline' %}', {
+                    target: '#main-content-area',
+                    swap: 'innerHTML',
+                });
+            }
+        } catch (err) {
+            console.error('Move failed:', err);
+        }
+    },
+
+    openPanel(url) {
+        this.panelUrl = url;
+        htmx.ajax('GET', url, { target: '#lead-panel-content', swap: 'innerHTML' });
+        this.panelOpen = true;
+    },
+
+    closePanel() {
+        this.panelOpen = false;
+    }
+}" class="kanban-wrapper">
+
+    <!-- Pipeline Selector & Actions -->
+    <div class="flex items-center justify-between p-4 pb-0 gap-4">
+        <div class="flex items-center gap-3">
+            <select class="select select-sm"
+                    hx-get="{% url 'leads:pipeline' %}"
+                    hx-target="#main-content-area"
+                    name="pipeline"
+                    hx-trigger="change">
+                {% for p in pipelines %}
+                <option value="{{ p.id }}" {% if p.id == current_pipeline.id %}selected{% endif %}>
+                    {{ p.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="btn btn-sm color-primary"
+                    @click="openPanel('{% url 'leads:add' %}')">
+                {% icon "add-outline" %}
+                {% trans "New Lead" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board p-4">
+        {% for col in stage_data %}
+        <div class="kanban-column"
+             @dragover.prevent="dragOver($event, '{{ col.stage.id }}')"
+             @dragleave="dragLeave($event, '{{ col.stage.id }}')"
+             @drop="drop($event, '{{ col.stage.id }}')"
+             :class="{ 'kanban-column-dragover': dragOverStage === '{{ col.stage.id }}' }">
+
+            <!-- Column Header -->
+            <div class="kanban-column-header">
+                <div class="flex items-center gap-2">
+                    <span class="kanban-column-dot color-{{ col.stage.color }}"></span>
+                    <span class="kanban-column-title">{{ col.stage.name }}</span>
+                    <span class="badge badge-sm">{{ col.count }}</span>
+                </div>
+                <span class="text-xs text-base-content/50">{{ col.value|floatformat:0 }}&euro;</span>
+            </div>
+
+            <!-- Column Body -->
+            <div class="kanban-column-body">
+                {% for lead in col.leads %}
+                <div class="kanban-card"
+                     draggable="true"
+                     @dragstart="startDrag($event, '{{ lead.id }}')"
+                     @dragend="endDrag($event)"
+                     @click="openPanel('{% url 'leads:edit' lead_id=lead.id %}')">
+
+                    <div class="kanban-card-header">
+                        <div class="flex items-center gap-2">
+                            <div class="avatar avatar-primary avatar-xs">
+                                <span class="text-[10px]">{{ lead.initials }}</span>
+                            </div>
+                            <span class="kanban-card-title">{{ lead.name }}</span>
+                        </div>
+                        <span class="badge badge-sm color-{{ lead.priority_color }}">{{ lead.get_priority_display }}</span>
+                    </div>
+
+                    {% if lead.company %}
+                    <div class="kanban-card-company">
+                        {% icon "business-outline" css_class="text-xs" %}
+                        {{ lead.company }}
+                    </div>
+                    {% endif %}
+
+                    <div class="kanban-card-footer">
+                        {% if lead.value %}
+                        <span class="kanban-card-value">{{ lead.value|floatformat:2 }}&euro;</span>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+                        <span class="kanban-card-days">{{ lead.days_in_stage }}d</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="kanban-empty">
+                    <span class="text-xs text-base-content/40">{% trans "No leads" %}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Side Sheet for Lead Edit/Add -->
+    <div class="sheet-backdrop" :class="{ 'is-open': panelOpen }" @click.self="closePanel()">
+        <div class="side-sheet side-sheet-right" id="lead-panel-content">
+            <!-- Content loaded via HTMX -->
+        </div>
+    </div>
+</div>

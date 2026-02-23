@@ -1,0 +1,169 @@
+{% load djicons i18n %}
+
+<!-- Header -->
+<div class="side-sheet-header">
+    <h3 class="sheet-title">{% trans "Edit Lead" %}</h3>
+    <button class="sheet-close" @click="closePanel()">
+        {% icon "close-outline" %}
+    </button>
+</div>
+
+<!-- Body -->
+<div class="side-sheet-content">
+    <form id="edit-lead-form"
+          hx-post="{% url 'leads:edit' lead_id=lead.id %}"
+          hx-target="#datatable-body"
+          hx-swap="innerHTML"
+          @htmx:after-request="closePanel()"
+          class="flex flex-col gap-4 p-6">
+        {% csrf_token %}
+
+        <!-- Status Badge -->
+        {% if lead.status != 'open' %}
+        <div class="callout callout-{{ lead.status_color }}">
+            <div class="callout-icon">
+                {% if lead.status == 'won' %}{% icon "trophy-outline" %}{% else %}{% icon "close-circle-outline" %}{% endif %}
+            </div>
+            <div class="callout-content">
+                <div class="callout-title">{{ lead.get_status_display }}</div>
+                <div class="callout-text">
+                    {% if lead.status == 'won' and lead.won_date %}
+                        {% trans "Won on" %} {{ lead.won_date|date:"N j, Y" }}
+                    {% elif lead.status == 'lost' and lead.lost_date %}
+                        {% trans "Lost on" %} {{ lead.lost_date|date:"N j, Y" }}
+                        {% if lead.loss_reason %} &mdash; {{ lead.loss_reason.name }}{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Name -->
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Name" %} *</label>
+            <input type="text" name="name" class="input input-sm w-full"
+                   value="{{ lead.name }}" placeholder="{% trans 'Lead name' %}" required>
+        </div>
+
+        <!-- Email -->
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Email" %}</label>
+            <input type="email" name="email" class="input input-sm w-full"
+                   value="{{ lead.email }}" placeholder="{% trans 'email@example.com' %}">
+        </div>
+
+        <!-- Phone -->
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Phone" %}</label>
+            <input type="tel" name="phone" class="input input-sm w-full"
+                   value="{{ lead.phone }}" placeholder="{% trans '+34 600 000 000' %}">
+        </div>
+
+        <!-- Company -->
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Company" %}</label>
+            <input type="text" name="company" class="input input-sm w-full"
+                   value="{{ lead.company }}" placeholder="{% trans 'Company name' %}">
+        </div>
+
+        <!-- Value & Expected Close -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Value" %} (&euro;)</label>
+                <input type="number" name="value" class="input input-sm w-full"
+                       value="{{ lead.value }}" min="0" step="0.01">
+            </div>
+            <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Expected Close" %}</label>
+                <input type="date" name="expected_close_date" class="input input-sm w-full"
+                       value="{% if lead.expected_close_date %}{{ lead.expected_close_date|date:'Y-m-d' }}{% endif %}">
+            </div>
+        </div>
+
+        <!-- Pipeline & Stage -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Pipeline" %}</label>
+                <select name="pipeline" class="select select-sm w-full">
+                    {% for p in pipelines %}
+                    <option value="{{ p.id }}" {% if p.id == lead.pipeline_id %}selected{% endif %}>
+                        {{ p.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Stage" %}</label>
+                <select name="stage" class="select select-sm w-full">
+                    {% for stage in stages %}
+                    <option value="{{ stage.id }}" {% if stage.id == lead.stage_id %}selected{% endif %}>
+                        {{ stage.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Source & Priority -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Source" %}</label>
+                <select name="source" class="select select-sm w-full">
+                    {% for value, label in source_choices %}
+                    <option value="{{ value }}" {% if value == lead.source %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Priority" %}</label>
+                <select name="priority" class="select select-sm w-full">
+                    {% for value, label in priority_choices %}
+                    <option value="{{ value }}" {% if value == lead.priority %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Customer -->
+        {% if customers_list %}
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Link to Customer" %}</label>
+            <select name="customer" class="select select-sm w-full">
+                <option value="">{% trans "None" %}</option>
+                {% for customer in customers_list %}
+                <option value="{{ customer.id }}" {% if lead.customer_id == customer.id %}selected{% endif %}>
+                    {{ customer.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <!-- Notes -->
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Notes" %}</label>
+            <textarea name="notes" class="textarea textarea-sm w-full" rows="2"
+                      placeholder="{% trans 'Additional notes...' %}">{{ lead.notes }}</textarea>
+        </div>
+
+        <!-- Meta Info -->
+        <div class="text-xs text-base-content/40 mt-2">
+            <div>{% trans "Created" %}: {{ lead.created_at|date:"N j, Y H:i" }}</div>
+            <div>{% trans "Days in stage" %}: {{ lead.days_in_stage }}</div>
+            <div>{% trans "Days open" %}: {{ lead.days_open }}</div>
+        </div>
+    </form>
+</div>
+
+<!-- Footer -->
+<div class="side-sheet-footer">
+    <div class="flex justify-end gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="closePanel()">
+            {% trans "Cancel" %}
+        </button>
+        <button type="submit" form="edit-lead-form" class="btn btn-sm color-primary">
+            {% icon "save-outline" %}
+            {% trans "Save" %}
+        </button>
+    </div>
+</div>

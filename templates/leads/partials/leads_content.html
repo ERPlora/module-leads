@@ -1,0 +1,231 @@
+{% load djicons i18n %}
+
+<div x-data="{
+    panelOpen: false,
+    selectedIds: [],
+    selectAll: false,
+    deleteConfirm: false,
+    deleteTarget: null,
+    lostModal: false,
+    lostTarget: null,
+    toggleSelect(id) {
+        const idx = this.selectedIds.indexOf(id);
+        if (idx > -1) this.selectedIds.splice(idx, 1);
+        else this.selectedIds.push(id);
+        this.selectAll = false;
+    },
+    toggleAll(ids) {
+        if (this.selectAll) this.selectedIds = [];
+        else this.selectedIds = [...ids];
+        this.selectAll = !this.selectAll;
+    },
+    clearSelection() { this.selectedIds = []; this.selectAll = false; },
+    openPanel(url) {
+        htmx.ajax('GET', url, { target: '#lead-panel-content', swap: 'innerHTML' });
+        this.panelOpen = true;
+    },
+    closePanel() {
+        this.panelOpen = false;
+    },
+    confirmDelete() {
+        if (this.deleteTarget) {
+            htmx.ajax('POST', this.deleteTarget.url, {
+                target: '#datatable-body',
+                swap: 'innerHTML',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' }
+            });
+        }
+        this.deleteConfirm = false;
+        this.deleteTarget = null;
+    }
+}">
+
+    <div class="datatable glass mt-5" id="leads-datatable">
+
+        <!-- Toolbar -->
+        <div class="datatable-toolbar">
+            <div class="datatable-toolbar-start">
+                <label class="input input-sm datatable-search">
+                    {% icon "search-outline" %}
+                    <input type="search"
+                           name="q"
+                           placeholder="{% trans 'Search leads...' %}"
+                           value="{{ search_query|default:'' }}"
+                           autocomplete="off"
+                           hx-get="{% url 'leads:list' %}"
+                           hx-target="#datatable-body"
+                           hx-include="#leads-datatable"
+                           hx-trigger="input changed delay:300ms, search">
+                </label>
+                <select name="status"
+                        class="select select-sm"
+                        hx-get="{% url 'leads:list' %}"
+                        hx-target="#datatable-body"
+                        hx-include="#leads-datatable"
+                        hx-trigger="change">
+                    <option value="open" {% if status_filter == 'open' %}selected{% endif %}>{% trans "Open" %}</option>
+                    <option value="won" {% if status_filter == 'won' %}selected{% endif %}>{% trans "Won" %}</option>
+                    <option value="lost" {% if status_filter == 'lost' %}selected{% endif %}>{% trans "Lost" %}</option>
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>{% trans "All" %}</option>
+                </select>
+                <select name="stage"
+                        class="select select-sm"
+                        hx-get="{% url 'leads:list' %}"
+                        hx-target="#datatable-body"
+                        hx-include="#leads-datatable"
+                        hx-trigger="change">
+                    <option value="">{% trans "All Stages" %}</option>
+                    {% for stage in stages_list %}
+                    <option value="{{ stage.id }}" {% if stage_filter == stage.id|slugify %}selected{% endif %}>
+                        {{ stage.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <select name="priority"
+                        class="select select-sm"
+                        hx-get="{% url 'leads:list' %}"
+                        hx-target="#datatable-body"
+                        hx-include="#leads-datatable"
+                        hx-trigger="change">
+                    <option value="">{% trans "All Priorities" %}</option>
+                    {% for value, label in priority_choices %}
+                    <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <select name="source"
+                        class="select select-sm"
+                        hx-get="{% url 'leads:list' %}"
+                        hx-target="#datatable-body"
+                        hx-include="#leads-datatable"
+                        hx-trigger="change">
+                    <option value="">{% trans "All Sources" %}</option>
+                    {% for value, label in source_choices %}
+                    <option value="{{ value }}" {% if source_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="datatable-toolbar-end">
+                <button class="btn btn-sm btn-circle color-primary"
+                        @click="openPanel('{% url 'leads:add' %}')"
+                        title="{% trans 'Add Lead' %}">
+                    {% icon "add-outline" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div class="datatable-bulk" x-show="selectedIds.length > 0" x-cloak>
+            <div class="datatable-bulk-info">
+                <span class="datatable-bulk-count" x-text="selectedIds.length"></span>
+                <span>{% trans "selected" %}</span>
+            </div>
+            <div class="datatable-bulk-actions">
+                <button class="datatable-bulk-btn datatable-bulk-btn-danger"
+                        @click="selectedIds.forEach(id => {
+                            htmx.ajax('POST', '/m/leads/' + id + '/delete/', {
+                                target: '#datatable-body',
+                                swap: 'innerHTML',
+                                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' }
+                            });
+                        }); clearSelection();">
+                    {% icon "trash-outline" %}
+                    {% trans "Delete" %}
+                </button>
+                <button class="datatable-bulk-clear" @click="clearSelection()" title="{% trans 'Clear selection' %}">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+        </div>
+
+        {% csrf_token %}
+
+        <!-- Hidden state inputs -->
+        <input type="hidden" name="sort" value="{{ sort_field|default:'created' }}">
+        <input type="hidden" name="dir" value="{{ sort_dir|default:'desc' }}">
+        <input type="hidden" name="per_page" value="{{ per_page|default:'10' }}">
+
+        <!-- Datatable Body (HTMX swap target) -->
+        <div id="datatable-body">
+            {% include "leads/partials/leads_list.html" %}
+        </div>
+    </div>
+
+    <!-- Side Sheet -->
+    <div class="sheet-backdrop" :class="{ 'is-open': panelOpen }" @click.self="closePanel()">
+        <div class="side-sheet side-sheet-right" id="lead-panel-content">
+            <!-- Content loaded via HTMX -->
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-backdrop" :data-state="deleteConfirm ? 'open' : 'closed'" @click.self="deleteConfirm = false; deleteTarget = null">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Delete Lead" %}</h3>
+                <button class="modal-close" @click="deleteConfirm = false; deleteTarget = null">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-base-content/70">
+                    {% trans "Are you sure you want to delete" %} <strong x-text="deleteTarget?.name"></strong>?
+                    {% trans "This action cannot be undone." %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost btn-sm" @click="deleteConfirm = false; deleteTarget = null">
+                    {% trans "Cancel" %}
+                </button>
+                <button class="btn btn-sm color-error" @click="confirmDelete()">
+                    {% icon "trash-outline" %}
+                    {% trans "Delete" %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as Lost Modal -->
+    <div class="modal-backdrop" :data-state="lostModal ? 'open' : 'closed'" @click.self="lostModal = false; lostTarget = null">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Mark as Lost" %}</h3>
+                <button class="modal-close" @click="lostModal = false; lostTarget = null">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <form @submit.prevent="
+                if (lostTarget) {
+                    const formData = new FormData($event.target);
+                    htmx.ajax('POST', lostTarget.url, {
+                        target: '#datatable-body',
+                        swap: 'innerHTML',
+                        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' },
+                        values: Object.fromEntries(formData)
+                    });
+                }
+                lostModal = false;
+                lostTarget = null;
+            ">
+                <div class="modal-body">
+                    <p class="text-sm text-base-content/70 mb-4">
+                        {% trans "Why was this lead lost?" %}
+                    </p>
+                    <select name="loss_reason" class="select select-sm w-full">
+                        <option value="">{% trans "Select a reason..." %}</option>
+                        {% comment %}Loss reasons will be populated from lead detail view{% endcomment %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" @click="lostModal = false; lostTarget = null">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-sm color-error">
+                        {% icon "close-circle-outline" %}
+                        {% trans "Mark Lost" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>

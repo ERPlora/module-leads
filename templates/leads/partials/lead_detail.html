@@ -1,0 +1,373 @@
+{% load djicons i18n %}
+
+<div class="p-4" x-data="{
+    lostModal: false,
+    activityForm: false,
+}">
+
+    <!-- Header with back button -->
+    <div class="flex items-center gap-4 mb-6">
+        <button class="btn btn-ghost btn-sm btn-circle"
+                hx-get="{% url 'leads:list' %}"
+                hx-target="#main-content-area"
+                hx-push-url="true">
+            {% icon "arrow-back-outline" %}
+        </button>
+        <div class="flex-1">
+            <h2 class="text-xl font-semibold">{{ lead.name }}</h2>
+            <div class="text-sm text-base-content/60">
+                {% if lead.company %}{{ lead.company }} &middot; {% endif %}
+                {{ lead.get_source_display }}
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="badge color-{{ lead.status_color }}">{{ lead.get_status_display }}</span>
+            <span class="badge color-{{ lead.priority_color }}">{{ lead.get_priority_display }}</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Lead Info -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+
+            <!-- Lead Details Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "person-outline" css_class="text-primary" %} {% trans "Lead Details" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list">
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Email" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                {% if lead.email %}
+                                <a href="mailto:{{ lead.email }}" class="text-primary text-sm">{{ lead.email }}</a>
+                                {% else %}
+                                <span class="text-sm text-base-content/40">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Phone" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                {% if lead.phone %}
+                                <a href="tel:{{ lead.phone }}" class="text-primary text-sm">{{ lead.phone }}</a>
+                                {% else %}
+                                <span class="text-sm text-base-content/40">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Company" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-sm">{{ lead.company|default:"-" }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Value" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                {% if lead.value %}
+                                <span class="font-medium text-success">{{ lead.value|floatformat:2 }}&euro;</span>
+                                {% else %}
+                                <span class="text-sm text-base-content/40">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Expected Close" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-sm">
+                                    {% if lead.expected_close_date %}{{ lead.expected_close_date|date:"N j, Y" }}{% else %}-{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Pipeline / Stage" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-sm">{{ lead.pipeline.name }}</span>
+                                <span class="badge badge-sm color-{{ lead.stage.color }} ml-2">{{ lead.stage.name }}</span>
+                            </div>
+                        </div>
+                        {% if lead.customer %}
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Linked Customer" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="badge badge-sm color-primary">{{ lead.customer.name }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if lead.notes %}
+                        <div class="list-item list-item-multiline">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Notes" %}</div>
+                                <div class="list-item-note">{{ lead.notes|linebreaksbr }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Activity Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "add-circle-outline" css_class="text-success" %} {% trans "Add Activity" %}</h3>
+                    <button class="btn btn-ghost btn-sm" @click="activityForm = !activityForm">
+                        <span x-text="activityForm ? '{% trans "Hide" %}' : '{% trans "Show" %}'"></span>
+                    </button>
+                </div>
+                <div class="card-body" x-show="activityForm" x-cloak>
+                    <form hx-post="{% url 'leads:add_activity' lead_id=lead.id %}"
+                          hx-target="#main-content-area"
+                          hx-swap="innerHTML"
+                          class="flex flex-col gap-3">
+                        {% csrf_token %}
+                        <div>
+                            <label class="text-sm font-medium mb-1 block">{% trans "Type" %}</label>
+                            <select name="activity_type" class="select select-sm w-full">
+                                <option value="note">{% trans "Note" %}</option>
+                                <option value="call">{% trans "Call" %}</option>
+                                <option value="email">{% trans "Email" %}</option>
+                                <option value="meeting">{% trans "Meeting" %}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium mb-1 block">{% trans "Description" %}</label>
+                            <textarea name="description" class="textarea textarea-sm w-full" rows="3"
+                                      placeholder="{% trans 'Describe the activity...' %}" required></textarea>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn btn-sm color-primary">
+                                {% icon "add-outline" %}
+                                {% trans "Add Activity" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "time-outline" css_class="text-warning" %} {% trans "Activity Timeline" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    {% if activities %}
+                    <div class="list">
+                        {% for activity in activities %}
+                        <div class="list-item">
+                            <div class="list-item-start">
+                                <div class="w-8 h-8 bg-{{ activity.color }}/10 rounded-full flex items-center justify-center">
+                                    {% icon activity.icon css_class="text-sm text-{{ activity.color }}" %}
+                                </div>
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-label">
+                                    {{ activity.get_activity_type_display }}
+                                </div>
+                                <div class="list-item-note">{{ activity.description }}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-xs text-base-content/50">{{ activity.created_at|timesince }} {% trans "ago" %}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-6 text-center text-base-content/50">
+                        {% trans "No activities yet" %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Actions & Quick Info -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Quick Actions -->
+            {% if lead.status == 'open' %}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "flash-outline" css_class="text-warning" %} {% trans "Actions" %}</h3>
+                </div>
+                <div class="card-body flex flex-col gap-2">
+                    <button class="btn btn-sm color-success w-full"
+                            hx-post="{% url 'leads:won' lead_id=lead.id %}"
+                            hx-target="#main-content-area"
+                            hx-swap="innerHTML">
+                        {% icon "trophy-outline" %}
+                        {% trans "Mark as Won" %}
+                    </button>
+                    <button class="btn btn-sm color-error w-full"
+                            @click="lostModal = true">
+                        {% icon "close-circle-outline" %}
+                        {% trans "Mark as Lost" %}
+                    </button>
+                    {% if not lead.customer %}
+                    <button class="btn btn-sm btn-outline w-full"
+                            hx-post="{% url 'leads:convert' lead_id=lead.id %}"
+                            hx-target="#main-content-area"
+                            hx-swap="innerHTML">
+                        {% icon "people-outline" %}
+                        {% trans "Convert to Customer" %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Move Stage -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "git-branch-outline" css_class="text-primary" %} {% trans "Move Stage" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list">
+                        {% for stage in stages %}
+                        <button class="list-item list-item-clickable w-full text-left{% if stage.id == lead.stage_id %} bg-primary/5{% endif %}"
+                                {% if stage.id != lead.stage_id %}
+                                hx-post="{% url 'leads:move_stage' lead_id=lead.id %}"
+                                hx-vals='{"stage_id": "{{ stage.id }}"}'
+                                hx-target="#main-content-area"
+                                hx-swap="innerHTML"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                {% endif %}>
+                            <div class="list-item-start">
+                                <span class="w-3 h-3 rounded-full bg-{{ stage.color }}"></span>
+                            </div>
+                            <div class="list-item-content">
+                                <div class="list-item-label">{{ stage.name }}</div>
+                                <div class="list-item-note">{{ stage.probability }}% {% trans "probability" %}</div>
+                            </div>
+                            {% if stage.id == lead.stage_id %}
+                            <div class="list-item-end">
+                                {% icon "checkmark-outline" css_class="text-primary" %}
+                            </div>
+                            {% endif %}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Info Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% icon "information-circle-outline" css_class="text-info" %} {% trans "Info" %}</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list">
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Created" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-sm">{{ lead.created_at|date:"N j, Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Days Open" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="badge badge-sm">{{ lead.days_open }}d</span>
+                            </div>
+                        </div>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Days in Stage" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="badge badge-sm">{{ lead.days_in_stage }}d</span>
+                            </div>
+                        </div>
+                        {% if lead.status == 'won' and lead.won_date %}
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Won Date" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-sm text-success">{{ lead.won_date|date:"N j, Y" }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if lead.status == 'lost' %}
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Lost Date" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="text-sm text-danger">{{ lead.lost_date|date:"N j, Y" }}</span>
+                            </div>
+                        </div>
+                        {% if lead.loss_reason %}
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-label">{% trans "Loss Reason" %}</div>
+                            </div>
+                            <div class="list-item-end">
+                                <span class="badge badge-sm color-danger">{{ lead.loss_reason.name }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as Lost Modal -->
+    <div class="modal-backdrop" :data-state="lostModal ? 'open' : 'closed'" @click.self="lostModal = false">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Mark as Lost" %}</h3>
+                <button class="modal-close" @click="lostModal = false">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <form hx-post="{% url 'leads:lost' lead_id=lead.id %}"
+                  hx-target="#main-content-area"
+                  hx-swap="innerHTML"
+                  @htmx:after-request="lostModal = false">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-sm text-base-content/70 mb-4">
+                        {% trans "Why was this lead lost?" %}
+                    </p>
+                    <select name="loss_reason" class="select select-sm w-full">
+                        <option value="">{% trans "Select a reason..." %}</option>
+                        {% for reason in loss_reasons %}
+                        <option value="{{ reason.id }}">{{ reason.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" @click="lostModal = false">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-sm color-error">
+                        {% icon "close-circle-outline" %}
+                        {% trans "Mark Lost" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,226 @@
+{% load djicons i18n %}
+
+{% if leads %}
+
+<!-- Table View -->
+<div class="datatable-body">
+    <table class="datatable-table">
+        <thead class="datatable-thead">
+            <tr>
+                <th class="datatable-th datatable-th-checkbox">
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox"
+                               :checked="selectAll"
+                               @click="toggleAll([{% for lead in leads %}'{{ lead.id }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
+                        <span class="checkbox-mark"></span>
+                    </label>
+                </th>
+                <th class="datatable-th datatable-th-sortable{% if sort_field == 'name' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                    hx-get="{% url 'leads:list' %}?sort=name&dir={% if sort_field == 'name' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    hx-target="#datatable-body"
+                    hx-include="#leads-datatable"
+                    style="cursor: pointer;">
+                    {% trans "Lead" %}
+                    <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
+                </th>
+                <th class="datatable-th datatable-th-sortable{% if sort_field == 'company' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                    hx-get="{% url 'leads:list' %}?sort=company&dir={% if sort_field == 'company' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    hx-target="#datatable-body"
+                    hx-include="#leads-datatable"
+                    style="cursor: pointer;">
+                    {% trans "Company" %}
+                    <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
+                </th>
+                <th class="datatable-th datatable-th-sortable{% if sort_field == 'value' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                    hx-get="{% url 'leads:list' %}?sort=value&dir={% if sort_field == 'value' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    hx-target="#datatable-body"
+                    hx-include="#leads-datatable"
+                    style="cursor: pointer;">
+                    {% trans "Value" %}
+                    <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
+                </th>
+                <th class="datatable-th">{% trans "Stage" %}</th>
+                <th class="datatable-th datatable-th-sortable{% if sort_field == 'priority' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                    hx-get="{% url 'leads:list' %}?sort=priority&dir={% if sort_field == 'priority' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    hx-target="#datatable-body"
+                    hx-include="#leads-datatable"
+                    style="cursor: pointer;">
+                    {% trans "Priority" %}
+                    <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
+                </th>
+                <th class="datatable-th">{% trans "Source" %}</th>
+                <th class="datatable-th datatable-th-center">{% trans "Status" %}</th>
+                <th class="datatable-th datatable-th-actions">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody class="datatable-tbody">
+            {% for lead in leads %}
+            <tr class="datatable-tr"
+                data-id="{{ lead.id }}"
+                :class="{ 'datatable-tr-selected': selectedIds.includes('{{ lead.id }}') }">
+                <td class="datatable-td datatable-td-checkbox" onclick="event.stopPropagation();">
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox"
+                               :checked="selectedIds.includes('{{ lead.id }}')"
+                               @click="toggleSelect('{{ lead.id }}')">
+                        <span class="checkbox-mark"></span>
+                    </label>
+                </td>
+                <td class="datatable-td" data-label="{% trans 'Lead' %}">
+                    <div class="flex items-center gap-3 cursor-pointer"
+                         hx-get="{% url 'leads:detail' lead_id=lead.id %}"
+                         hx-target="#main-content-area"
+                         hx-push-url="true">
+                        <div class="avatar avatar-primary avatar-sm">
+                            <span class="text-xs">{{ lead.initials }}</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">{{ lead.name }}</span>
+                            {% if lead.email %}
+                            <div class="text-xs text-base-content/50">{{ lead.email }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td class="datatable-td" data-label="{% trans 'Company' %}">
+                    <span class="text-base-content/60">{{ lead.company|default:"-" }}</span>
+                </td>
+                <td class="datatable-td" data-label="{% trans 'Value' %}">
+                    {% if lead.value %}
+                    <span class="font-medium text-success">{{ lead.value|floatformat:2 }}&euro;</span>
+                    {% else %}
+                    <span class="text-base-content/40">-</span>
+                    {% endif %}
+                </td>
+                <td class="datatable-td" data-label="{% trans 'Stage' %}">
+                    <span class="badge badge-sm color-{{ lead.stage.color }}">{{ lead.stage.name }}</span>
+                </td>
+                <td class="datatable-td" data-label="{% trans 'Priority' %}">
+                    <span class="badge badge-sm color-{{ lead.priority_color }}">{{ lead.get_priority_display }}</span>
+                </td>
+                <td class="datatable-td" data-label="{% trans 'Source' %}">
+                    <span class="text-sm text-base-content/60">{{ lead.get_source_display }}</span>
+                </td>
+                <td class="datatable-td datatable-td-center" data-label="{% trans 'Status' %}">
+                    <span class="badge badge-sm color-{{ lead.status_color }}">{{ lead.get_status_display }}</span>
+                </td>
+                <td class="datatable-td datatable-td-actions" onclick="event.stopPropagation();">
+                    <div class="datatable-row-actions">
+                        <button class="datatable-row-action"
+                                @click="openPanel('{% url 'leads:edit' lead_id=lead.id %}')"
+                                title="{% trans 'Edit' %}">
+                            {% icon "create-outline" %}
+                        </button>
+                        <a class="datatable-row-action"
+                           hx-get="{% url 'leads:detail' lead_id=lead.id %}"
+                           hx-target="#main-content-area"
+                           hx-push-url="true"
+                           title="{% trans 'View' %}">
+                            {% icon "eye-outline" %}
+                        </a>
+                        {% if lead.status == 'open' %}
+                        <button class="datatable-row-action color-success"
+                                hx-post="{% url 'leads:won' lead_id=lead.id %}"
+                                hx-target="#datatable-body"
+                                hx-include="#leads-datatable"
+                                title="{% trans 'Mark Won' %}">
+                            {% icon "trophy-outline" %}
+                        </button>
+                        {% endif %}
+                        <button class="datatable-row-action datatable-row-action-danger"
+                                @click="deleteTarget = { id: '{{ lead.id }}', name: '{{ lead.name|escapejs }}', url: '{% url 'leads:delete' lead_id=lead.id %}' }; deleteConfirm = true"
+                                title="{% trans 'Delete' %}">
+                            {% icon "trash-outline" %}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Footer / Pagination -->
+<div class="datatable-footer">
+    <div class="datatable-per-page">
+        {% trans "Show" %}
+        <select name="per_page"
+                hx-get="{% url 'leads:list' %}"
+                hx-target="#datatable-body"
+                hx-include="#leads-datatable"
+                hx-trigger="change">
+            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+        </select>
+        {% trans "per page" %}
+    </div>
+    <span class="datatable-info">
+        {% if page_obj.paginator.count > 0 %}
+        {% blocktrans with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}Showing {{ start }}-{{ end }} of {{ total }} leads{% endblocktrans %}
+        {% endif %}
+    </span>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="pagination pagination-sm">
+        <button class="pagination-btn pagination-prev"
+                {% if page_obj.has_previous %}
+                hx-get="{% url 'leads:list' %}?page={{ page_obj.previous_page_number }}"
+                hx-target="#datatable-body"
+                hx-include="#leads-datatable"
+                {% else %}disabled{% endif %}>
+            {% icon "chevron-back-outline" %}
+        </button>
+        {% for num in page_obj.paginator.page_range %}
+        <button class="pagination-btn{% if num == page_obj.number %} pagination-active{% endif %}"
+                hx-get="{% url 'leads:list' %}?page={{ num }}"
+                hx-target="#datatable-body"
+                hx-include="#leads-datatable">
+            {{ num }}
+        </button>
+        {% endfor %}
+        <button class="pagination-btn pagination-next"
+                {% if page_obj.has_next %}
+                hx-get="{% url 'leads:list' %}?page={{ page_obj.next_page_number }}"
+                hx-target="#datatable-body"
+                hx-include="#leads-datatable"
+                {% else %}disabled{% endif %}>
+            {% icon "chevron-forward-outline" %}
+        </button>
+    </nav>
+    {% endif %}
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="datatable-empty">
+    <div class="datatable-empty-icon">
+        {% if search_query or stage_filter or source_filter or priority_filter %}
+        {% icon "search-outline" %}
+        {% else %}
+        {% icon "funnel-outline" %}
+        {% endif %}
+    </div>
+    <div class="datatable-empty-title">
+        {% if search_query or stage_filter or source_filter or priority_filter %}
+        {% trans "No leads found" %}
+        {% else %}
+        {% trans "No leads yet" %}
+        {% endif %}
+    </div>
+    <div class="datatable-empty-text">
+        {% if search_query or stage_filter or source_filter or priority_filter %}
+        {% trans "Try a different search term or filter" %}
+        {% else %}
+        {% trans "Add your first lead to get started" %}
+        {% endif %}
+    </div>
+    {% if not search_query and not stage_filter and not source_filter and not priority_filter %}
+    <button class="btn color-primary mt-4"
+            @click="openPanel('{% url 'leads:add' %}')">
+        {% icon "add-outline" %}
+        {% trans "Add First Lead" %}
+    </button>
+    {% endif %}
+</div>
+{% endif %}

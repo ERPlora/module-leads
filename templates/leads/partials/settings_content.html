@@ -1,0 +1,454 @@
+{% load djicons i18n %}
+
+<div class="p-4" x-data="{
+    addStageModal: false,
+    addStageForPipeline: null,
+    addPipelineModal: false,
+    addReasonModal: false,
+    deleteConfirm: false,
+    deleteTarget: null,
+    confirmDelete() {
+        if (this.deleteTarget) {
+            htmx.ajax('POST', window.location.pathname, {
+                target: '#main-content-area',
+                swap: 'innerHTML',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' },
+                values: this.deleteTarget.values
+            });
+        }
+        this.deleteConfirm = false;
+        this.deleteTarget = null;
+    }
+}">
+
+    {% csrf_token %}
+
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                        {% icon "funnel-outline" css_class="text-xl text-primary" %}
+                    </div>
+                    <div>
+                        <div class="text-xs text-base-content/60">{% trans "Total Leads" %}</div>
+                        <div class="text-xl font-semibold">{{ total_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                        {% icon "checkmark-circle-outline" css_class="text-xl text-success" %}
+                    </div>
+                    <div>
+                        <div class="text-xs text-base-content/60">{% trans "Open" %}</div>
+                        <div class="text-xl font-semibold text-success">{{ open_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                        {% icon "trophy-outline" css_class="text-xl text-success" %}
+                    </div>
+                    <div>
+                        <div class="text-xs text-base-content/60">{% trans "Won" %}</div>
+                        <div class="text-xl font-semibold">{{ won_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-danger/10 rounded-xl flex items-center justify-center">
+                        {% icon "close-circle-outline" css_class="text-xl text-danger" %}
+                    </div>
+                    <div>
+                        <div class="text-xs text-base-content/60">{% trans "Lost" %}</div>
+                        <div class="text-xl font-semibold text-danger">{{ lost_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Settings -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <h3 class="card-title">{% icon "settings-outline" css_class="text-primary" %} {% trans "General Settings" %}</h3>
+        </div>
+        <div class="card-body">
+            <form hx-post="{% url 'leads:settings' %}"
+                  hx-target="#main-content-area"
+                  hx-swap="innerHTML"
+                  class="flex flex-col gap-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_settings">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">{% trans "Default Pipeline" %}</label>
+                        <select name="default_pipeline" class="select select-sm w-full">
+                            {% for p in pipelines %}
+                            <option value="{{ p.id }}"
+                                    {% if settings.default_pipeline_id == p.id %}selected{% endif %}>
+                                {{ p.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">{% trans "Default Source" %}</label>
+                        <select name="default_source" class="select select-sm w-full">
+                            {% for value, label in source_choices %}
+                            <option value="{{ value }}" {% if settings.default_source == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <label class="toggle color-success">
+                        <input type="checkbox" name="auto_create_customer_on_win"
+                               {% if settings.auto_create_customer_on_win %}checked{% endif %}>
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                    <div>
+                        <div class="text-sm font-medium">{% trans "Auto-create customer on win" %}</div>
+                        <div class="text-xs text-base-content/50">{% trans "Automatically create a customer record when a lead is won" %}</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-sm color-primary">
+                        {% icon "save-outline" %}
+                        {% trans "Save Settings" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pipelines & Stages -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <h3 class="card-title">{% icon "git-branch-outline" css_class="text-warning" %} {% trans "Pipelines & Stages" %}</h3>
+            <button class="btn btn-sm color-primary" @click="addPipelineModal = true">
+                {% icon "add-outline" %}
+                {% trans "Add Pipeline" %}
+            </button>
+        </div>
+        <div class="card-body p-0">
+            {% for pipeline in pipelines %}
+            <div class="border-b border-base-200 last:border-0">
+                <!-- Pipeline Header -->
+                <div class="flex items-center justify-between p-4 bg-base-100/50">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ pipeline.name }}</span>
+                        {% if pipeline.is_default %}
+                        <span class="badge badge-sm color-primary">{% trans "Default" %}</span>
+                        {% endif %}
+                        {% if not pipeline.is_active %}
+                        <span class="badge badge-sm color-danger">{% trans "Inactive" %}</span>
+                        {% endif %}
+                    </div>
+                    <button class="btn btn-ghost btn-sm"
+                            @click="addStageForPipeline = '{{ pipeline.id }}'; addStageModal = true">
+                        {% icon "add-outline" %}
+                        {% trans "Add Stage" %}
+                    </button>
+                </div>
+
+                <!-- Stages List -->
+                <div class="list">
+                    {% for stage in pipeline.stages.all %}
+                    {% if not stage.is_deleted %}
+                    <div class="list-item">
+                        <div class="list-item-start">
+                            <span class="w-3 h-3 rounded-full bg-{{ stage.color }}"></span>
+                        </div>
+                        <div class="list-item-content">
+                            <div class="list-item-label">
+                                {{ stage.name }}
+                                {% if stage.is_won %}<span class="badge badge-sm color-success ml-1">{% trans "Won" %}</span>{% endif %}
+                                {% if stage.is_lost %}<span class="badge badge-sm color-danger ml-1">{% trans "Lost" %}</span>{% endif %}
+                            </div>
+                            <div class="list-item-note">
+                                {% trans "Order" %}: {{ stage.order }} &middot;
+                                {% trans "Probability" %}: {{ stage.probability }}%
+                            </div>
+                        </div>
+                        <div class="list-item-end">
+                            <button class="btn btn-ghost btn-sm btn-circle color-error"
+                                    @click="deleteTarget = { name: '{{ stage.name|escapejs }}', values: { action: 'delete_stage', stage_id: '{{ stage.id }}' } }; deleteConfirm = true"
+                                    title="{% trans 'Delete Stage' %}">
+                                {% icon "trash-outline" %}
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-6 text-center text-base-content/50">
+                {% trans "No pipelines configured" %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Loss Reasons -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <h3 class="card-title">{% icon "flag-outline" css_class="text-danger" %} {% trans "Loss Reasons" %}</h3>
+            <button class="btn btn-sm color-primary" @click="addReasonModal = true">
+                {% icon "add-outline" %}
+                {% trans "Add Reason" %}
+            </button>
+        </div>
+        <div class="card-body p-0">
+            {% if loss_reasons %}
+            <div class="list">
+                {% for reason in loss_reasons %}
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-label">{{ reason.name }}</div>
+                        <div class="list-item-note">{% trans "Order" %}: {{ reason.sort_order }}</div>
+                    </div>
+                    <div class="list-item-end">
+                        <button class="btn btn-ghost btn-sm btn-circle color-error"
+                                @click="deleteTarget = { name: '{{ reason.name|escapejs }}', values: { action: 'delete_loss_reason', reason_id: '{{ reason.id }}' } }; deleteConfirm = true"
+                                title="{% trans 'Delete' %}">
+                            {% icon "trash-outline" %}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-6 text-center text-base-content/50">
+                {% trans "No loss reasons configured" %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">{% icon "flash-outline" css_class="text-primary" %} {% trans "Quick Actions" %}</h3>
+        </div>
+        <div class="card-body p-0">
+            <div class="list">
+                <a hx-get="{% url 'leads:pipeline' %}"
+                   hx-target="#main-content-area"
+                   hx-push-url="true"
+                   class="list-item list-item-clickable">
+                    <div class="list-item-start">
+                        {% icon "git-branch-outline" css_class="text-xl text-primary" %}
+                    </div>
+                    <div class="list-item-content">
+                        <div class="list-item-label">{% trans "View Pipeline" %}</div>
+                        <div class="list-item-note">{% trans "Visual Kanban board of your sales pipeline" %}</div>
+                    </div>
+                    <div class="list-item-end">
+                        <span class="list-item-chevron"></span>
+                    </div>
+                </a>
+                <a hx-get="{% url 'leads:list' %}"
+                   hx-target="#main-content-area"
+                   hx-push-url="true"
+                   class="list-item list-item-clickable">
+                    <div class="list-item-start">
+                        {% icon "people-outline" css_class="text-xl text-success" %}
+                    </div>
+                    <div class="list-item-content">
+                        <div class="list-item-label">{% trans "View All Leads" %}</div>
+                        <div class="list-item-note">{% trans "Browse and manage all leads in a table view" %}</div>
+                    </div>
+                    <div class="list-item-end">
+                        <span class="list-item-chevron"></span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Pipeline Modal -->
+    <div class="modal-backdrop" :data-state="addPipelineModal ? 'open' : 'closed'" @click.self="addPipelineModal = false">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Add Pipeline" %}</h3>
+                <button class="modal-close" @click="addPipelineModal = false">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <form hx-post="{% url 'leads:settings' %}"
+                  hx-target="#main-content-area"
+                  hx-swap="innerHTML"
+                  @htmx:after-request="addPipelineModal = false">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_pipeline">
+                <div class="modal-body flex flex-col gap-3">
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">{% trans "Name" %} *</label>
+                        <input type="text" name="pipeline_name" class="input input-sm w-full"
+                               placeholder="{% trans 'Pipeline name' %}" required>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">{% trans "Description" %}</label>
+                        <textarea name="pipeline_description" class="textarea textarea-sm w-full" rows="2"
+                                  placeholder="{% trans 'Pipeline description' %}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" @click="addPipelineModal = false">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-sm color-primary">
+                        {% icon "add-outline" %}
+                        {% trans "Add Pipeline" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Stage Modal -->
+    <div class="modal-backdrop" :data-state="addStageModal ? 'open' : 'closed'" @click.self="addStageModal = false">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Add Stage" %}</h3>
+                <button class="modal-close" @click="addStageModal = false">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <form hx-post="{% url 'leads:settings' %}"
+                  hx-target="#main-content-area"
+                  hx-swap="innerHTML"
+                  @htmx:after-request="addStageModal = false">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_stage">
+                <input type="hidden" name="pipeline_id" :value="addStageForPipeline">
+                <div class="modal-body flex flex-col gap-3">
+                    <div>
+                        <label class="text-sm font-medium mb-1 block">{% trans "Name" %} *</label>
+                        <input type="text" name="stage_name" class="input input-sm w-full"
+                               placeholder="{% trans 'Stage name' %}" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-sm font-medium mb-1 block">{% trans "Probability" %} (%)</label>
+                            <input type="number" name="stage_probability" class="input input-sm w-full"
+                                   value="0" min="0" max="100">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium mb-1 block">{% trans "Color" %}</label>
+                            <select name="stage_color" class="select select-sm w-full">
+                                {% for value, label in stage_colors %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2">
+                            <label class="toggle toggle-sm color-success">
+                                <input type="checkbox" name="stage_is_won">
+                                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                            </label>
+                            <span class="text-sm">{% trans "Won stage" %}</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <label class="toggle toggle-sm color-danger">
+                                <input type="checkbox" name="stage_is_lost">
+                                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                            </label>
+                            <span class="text-sm">{% trans "Lost stage" %}</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" @click="addStageModal = false">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-sm color-primary">
+                        {% icon "add-outline" %}
+                        {% trans "Add Stage" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Loss Reason Modal -->
+    <div class="modal-backdrop" :data-state="addReasonModal ? 'open' : 'closed'" @click.self="addReasonModal = false">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Add Loss Reason" %}</h3>
+                <button class="modal-close" @click="addReasonModal = false">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <form hx-post="{% url 'leads:settings' %}"
+                  hx-target="#main-content-area"
+                  hx-swap="innerHTML"
+                  @htmx:after-request="addReasonModal = false">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_loss_reason">
+                <div class="modal-body">
+                    <label class="text-sm font-medium mb-1 block">{% trans "Reason" %} *</label>
+                    <input type="text" name="reason_name" class="input input-sm w-full"
+                           placeholder="{% trans 'e.g. Price too high, Went with competitor...' %}" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost btn-sm" @click="addReasonModal = false">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-sm color-primary">
+                        {% icon "add-outline" %}
+                        {% trans "Add Reason" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-backdrop" :data-state="deleteConfirm ? 'open' : 'closed'" @click.self="deleteConfirm = false; deleteTarget = null">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">{% trans "Confirm Delete" %}</h3>
+                <button class="modal-close" @click="deleteConfirm = false; deleteTarget = null">
+                    {% icon "close-outline" %}
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-base-content/70">
+                    {% trans "Are you sure you want to delete" %} <strong x-text="deleteTarget?.name"></strong>?
+                    {% trans "This action cannot be undone." %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost btn-sm" @click="deleteConfirm = false; deleteTarget = null">
+                    {% trans "Cancel" %}
+                </button>
+                <button class="btn btn-sm color-error" @click="confirmDelete()">
+                    {% icon "trash-outline" %}
+                    {% trans "Delete" %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
