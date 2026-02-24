@@ -1,233 +1,79 @@
 {% load djicons i18n %}
 
 <div class="p-4">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">{% trans "Leads" %}</h1>
+        <p class="text-sm mt-1 opacity-60">{% trans "Sales pipeline and lead management with visual Kanban board" %}</p>
+    </div>
 
-    <!-- Key Metrics -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        <!-- Total Open -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="card">
-            <div class="card-body p-4">
+            <div class="card-body">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                        {% icon "funnel-outline" css_class="text-xl text-primary" %}
+                        {% icon "cube-outline" css_class="text-xl text-primary" %}
                     </div>
                     <div>
-                        <div class="text-xs text-base-content/60">{% trans "Open Leads" %}</div>
-                        <div class="text-xl font-semibold">{{ total_open }}</div>
+                        <div class="text-xs opacity-60">{% trans "Total Pipelines" %}</div>
+                        <div class="text-xl font-semibold">{{ total_pipelines }}</div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Pipeline Value -->
         <div class="card">
-            <div class="card-body p-4">
+            <div class="card-body">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
-                        {% icon "cash-outline" css_class="text-xl text-success" %}
+                        {% icon "checkmark-circle-outline" css_class="text-xl text-success" %}
                     </div>
                     <div>
-                        <div class="text-xs text-base-content/60">{% trans "Pipeline Value" %}</div>
-                        <div class="text-xl font-semibold text-success">{{ pipeline_value|floatformat:2 }}&euro;</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Won This Month -->
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
-                        {% icon "trophy-outline" css_class="text-xl text-success" %}
-                    </div>
-                    <div>
-                        <div class="text-xs text-base-content/60">{% trans "Won" %}</div>
-                        <div class="text-xl font-semibold text-success">{{ won_count }}</div>
-                        <div class="text-xs text-success/70">{{ won_value|floatformat:2 }}&euro;</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lost This Month -->
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-danger/10 rounded-xl flex items-center justify-center">
-                        {% icon "close-circle-outline" css_class="text-xl text-danger" %}
-                    </div>
-                    <div>
-                        <div class="text-xs text-base-content/60">{% trans "Lost" %}</div>
-                        <div class="text-xl font-semibold text-danger">{{ lost_count }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Conversion Rate -->
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center">
-                        {% icon "trending-up-outline" css_class="text-xl text-warning" %}
-                    </div>
-                    <div>
-                        <div class="text-xs text-base-content/60">{% trans "Conversion" %}</div>
-                        <div class="text-xl font-semibold">{{ conversion_rate }}%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Avg Close Time -->
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-info/10 rounded-xl flex items-center justify-center">
-                        {% icon "time-outline" css_class="text-xl text-info" %}
-                    </div>
-                    <div>
-                        <div class="text-xs text-base-content/60">{% trans "Avg Close" %}</div>
-                        <div class="text-xl font-semibold">{{ avg_close_days }}d</div>
+                        <div class="text-xs opacity-60">{% trans "Total LossReasons" %}</div>
+                        <div class="text-xl font-semibold">{{ total_loss_reasons }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Pipeline Breakdown -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    {% icon "git-branch-outline" css_class="text-primary" %}
-                    {% trans "Pipeline Breakdown" %}
-                </h3>
-                <a hx-get="{% url 'leads:pipeline' %}"
-                   hx-target="#main-content-area"
-                   hx-push-url="true"
-                   class="btn btn-ghost btn-sm">
-                    {% trans "View Pipeline" %}
-                    {% icon "arrow-forward-outline" %}
-                </a>
-            </div>
-            <div class="card-body p-0">
-                {% if stage_breakdown %}
-                <div class="list">
-                    {% for item in stage_breakdown %}
-                    <div class="list-item">
-                        <div class="list-item-start">
-                            <span class="badge color-{{ item.stage.color }}">{{ item.stage.probability }}%</span>
-                        </div>
-                        <div class="list-item-content">
-                            <div class="list-item-label">{{ item.stage.name }}</div>
-                            <div class="list-item-note">
-                                {{ item.count }} {% trans "leads" %} &middot; {{ item.value|floatformat:2 }}&euro;
-                            </div>
-                        </div>
-                        <div class="list-item-end">
-                            <span class="font-medium text-sm">{{ item.count }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="p-6 text-center text-base-content/50">
-                    {% trans "No pipeline data yet" %}
-                </div>
-                {% endif %}
-            </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{% trans "Quick Actions" %}</h3>
         </div>
-
-        <!-- Recent Leads -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    {% icon "people-outline" css_class="text-success" %}
-                    {% trans "Recent Leads" %}
-                </h3>
-                <a hx-get="{% url 'leads:list' %}"
-                   hx-target="#main-content-area"
-                   hx-push-url="true"
-                   class="btn btn-ghost btn-sm">
-                    {% trans "View All" %}
-                    {% icon "arrow-forward-outline" %}
-                </a>
-            </div>
-            <div class="card-body p-0">
-                {% if recent_leads %}
-                <div class="list">
-                    {% for lead in recent_leads %}
-                    <a hx-get="{% url 'leads:detail' lead_id=lead.id %}"
-                       hx-target="#main-content-area"
-                       hx-push-url="true"
-                       class="list-item list-item-clickable">
-                        <div class="list-item-start">
-                            <div class="avatar avatar-primary avatar-sm">
-                                <span class="text-xs">{{ lead.initials }}</span>
-                            </div>
-                        </div>
-                        <div class="list-item-content">
-                            <div class="list-item-label">{{ lead.name }}</div>
-                            <div class="list-item-note">
-                                {% if lead.company %}{{ lead.company }} &middot;{% endif %}
-                                {{ lead.stage.name }}
-                            </div>
-                        </div>
-                        <div class="list-item-end">
-                            {% if lead.value %}
-                            <span class="font-medium text-sm text-success">{{ lead.value|floatformat:2 }}&euro;</span>
-                            {% endif %}
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="p-6 text-center text-base-content/50">
-                    {% trans "No leads yet" %}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="card lg:col-span-2">
-            <div class="card-header">
-                <h3 class="card-title">
-                    {% icon "time-outline" css_class="text-warning" %}
-                    {% trans "Recent Activity" %}
-                </h3>
-            </div>
-            <div class="card-body p-0">
-                {% if recent_activities %}
-                <div class="list">
-                    {% for activity in recent_activities %}
-                    <div class="list-item">
-                        <div class="list-item-start">
-                            <div class="w-8 h-8 bg-{{ activity.color }}/10 rounded-full flex items-center justify-center">
-                                {% icon activity.icon css_class="text-sm text-{{ activity.color }}" %}
-                            </div>
-                        </div>
-                        <div class="list-item-content">
-                            <div class="list-item-label">
-                                {{ activity.lead.name }}
-                                <span class="badge badge-sm ml-1">{{ activity.get_activity_type_display }}</span>
-                            </div>
-                            <div class="list-item-note">{{ activity.description|truncatechars:80 }}</div>
-                        </div>
-                        <div class="list-item-end">
-                            <span class="text-xs text-base-content/50">{{ activity.created_at|timesince }} {% trans "ago" %}</span>
-                        </div>
+        <div class="list list-inset">
+            <a class="list-item list-item-clickable"
+               hx-get="{% url 'leads:pipelines_list' %}"
+               hx-target="#main-content-area"
+               hx-push-url="true">
+                <div class="list-item-start">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        {% icon "list-outline" css_class="text-xl text-primary" %}
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="p-6 text-center text-base-content/50">
-                    {% trans "No activity yet" %}
+                <div class="list-item-content">
+                    <div class="list-item-label">{% trans "Manage Pipelines" %}</div>
+                    <div class="list-item-note">{% trans "View and manage all pipelines" %}</div>
                 </div>
-                {% endif %}
-            </div>
+                <div class="list-item-end">
+                    <span class="list-item-chevron">{% icon "chevron-forward-outline" %}</span>
+                </div>
+            </a>
+            <a class="list-item list-item-clickable"
+               hx-get="{% url 'leads:loss_reasons_list' %}"
+               hx-target="#main-content-area"
+               hx-push-url="true">
+                <div class="list-item-start">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        {% icon "list-outline" css_class="text-xl text-primary" %}
+                    </div>
+                </div>
+                <div class="list-item-content">
+                    <div class="list-item-label">{% trans "Manage LossReasons" %}</div>
+                    <div class="list-item-note">{% trans "View and manage all loss reasons" %}</div>
+                </div>
+                <div class="list-item-end">
+                    <span class="list-item-chevron">{% icon "chevron-forward-outline" %}</span>
+                </div>
+            </a>
         </div>
     </div>
 </div>

@@ -7,28 +7,22 @@ urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
 
-    # Pipeline (Kanban)
-    path('pipeline/', views.pipeline, name='pipeline'),
+    # Pipeline
+    path('pipelines/', views.pipelines_list, name='pipelines_list'),
+    path('pipelines/add/', views.pipeline_add, name='pipeline_add'),
+    path('pipelines/<uuid:pk>/edit/', views.pipeline_edit, name='pipeline_edit'),
+    path('pipelines/<uuid:pk>/delete/', views.pipeline_delete, name='pipeline_delete'),
+    path('pipelines/<uuid:pk>/toggle/', views.pipeline_toggle_status, name='pipeline_toggle_status'),
+    path('pipelines/bulk/', views.pipelines_bulk_action, name='pipelines_bulk_action'),
 
-    # Leads List
-    path('list/', views.lead_list, name='list'),
-
-    # Lead CRUD
-    path('add/', views.lead_add, name='add'),
-    path('<uuid:lead_id>/', views.lead_detail, name='detail'),
-    path('<uuid:lead_id>/edit/', views.lead_edit, name='edit'),
-    path('<uuid:lead_id>/delete/', views.lead_delete, name='delete'),
-
-    # Lead Actions
-    path('<uuid:lead_id>/move/', views.lead_move_stage, name='move_stage'),
-    path('<uuid:lead_id>/convert/', views.lead_convert, name='convert'),
-    path('<uuid:lead_id>/won/', views.lead_won, name='won'),
-    path('<uuid:lead_id>/lost/', views.lead_lost, name='lost'),
-    path('<uuid:lead_id>/activity/add/', views.lead_add_activity, name='add_activity'),
+    # LossReason
+    path('loss_reasons/', views.loss_reasons_list, name='loss_reasons_list'),
+    path('loss_reasons/add/', views.loss_reason_add, name='loss_reason_add'),
+    path('loss_reasons/<uuid:pk>/edit/', views.loss_reason_edit, name='loss_reason_edit'),
+    path('loss_reasons/<uuid:pk>/delete/', views.loss_reason_delete, name='loss_reason_delete'),
+    path('loss_reasons/<uuid:pk>/toggle/', views.loss_reason_toggle_status, name='loss_reason_toggle_status'),
+    path('loss_reasons/bulk/', views.loss_reasons_bulk_action, name='loss_reasons_bulk_action'),
 
     # Settings
     path('settings/', views.settings_view, name='settings'),
-
-    # API
-    path('api/pipeline-data/', views.pipeline_data_api, name='pipeline_data'),
 ]

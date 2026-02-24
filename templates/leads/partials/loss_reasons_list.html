@@ -1,0 +1,109 @@
+{% load djicons i18n %}
+
+{% if loss_reasons %}
+<div class="datatable-body">
+    <table class="datatable-table">
+        <thead class="datatable-thead">
+            <tr>
+                <th class="datatable-th datatable-th-checkbox">
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox" :checked="selectAll" @click="toggleAll([{% for item in loss_reasons %}'{{ item.id }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
+                        <span class="checkbox-mark"></span>
+                    </label>
+                </th>
+                <th class="datatable-th datatable-th-sortable{% if sort_field == 'name' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                    hx-get="{% url 'leads:loss_reasons_list' %}?sort=name&dir={% if sort_field == 'name' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    hx-target="#datatable-body" hx-include="#loss_reasons-datatable" style="cursor: pointer;">
+                    {% trans "Name" %}
+                    <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
+                </th>
+                <th class="datatable-th datatable-th-center">{% trans "Status" %}</th>
+                <th class="datatable-th datatable-th-sortable{% if sort_field == 'sort_order' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                    hx-get="{% url 'leads:loss_reasons_list' %}?sort=sort_order&dir={% if sort_field == 'sort_order' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                    hx-target="#datatable-body" hx-include="#loss_reasons-datatable" style="cursor: pointer;">
+                    {% trans "Sort Order" %}
+                    <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
+                </th>
+                <th class="datatable-th datatable-th-actions">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody class="datatable-tbody">
+            {% for item in loss_reasons %}
+            <tr class="datatable-tr" data-id="{{ item.id }}" :class="{ 'datatable-tr-selected': selectedIds.includes('{{ item.id }}') }">
+                <td class="datatable-td datatable-td-checkbox" onclick="event.stopPropagation();">
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox" :checked="selectedIds.includes('{{ item.id }}')" @click="toggleSelect('{{ item.id }}')">
+                        <span class="checkbox-mark"></span>
+                    </label>
+                </td>
+                <td class="datatable-td">
+                    <span class="font-medium cursor-pointer" @click="openPanel('{% url 'leads:loss_reason_edit' item.id %}')">{{ item.name }}</span>
+                </td>
+                <td class="datatable-td datatable-td-center" onclick="event.stopPropagation();">
+                    <label class="toggle toggle-sm color-success">
+                        <input type="checkbox" {% if item.is_active %}checked{% endif %}
+                               hx-post="{% url 'leads:loss_reason_toggle_status' item.id %}"
+                               hx-target="#datatable-body" hx-include="#loss_reasons-datatable">
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </td>
+                <td class="datatable-td">{{ item.sort_order }}</td>
+                <td class="datatable-td datatable-td-actions" onclick="event.stopPropagation();">
+                    <div class="datatable-row-actions">
+                        <button class="datatable-row-action" @click="openPanel('{% url 'leads:loss_reason_edit' item.id %}')" title="{% trans 'Edit' %}">
+                            {% icon "create-outline" %}
+                        </button>
+                        <button class="datatable-row-action datatable-row-action-danger"
+                                @click="deleteTarget = { id: '{{ item.id }}', name: '{{ item.name }}', url: '{% url 'leads:loss_reason_delete' item.id %}' }; deleteConfirm = true"
+                                title="{% trans 'Delete' %}">
+                            {% icon "trash-outline" %}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="datatable-footer">
+    <div class="datatable-per-page">
+        {% trans "Show" %}
+        <select name="per_page" hx-get="{% url 'leads:loss_reasons_list' %}" hx-target="#datatable-body" hx-include="#loss_reasons-datatable" hx-trigger="change">
+            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+        </select>
+        {% trans "per page" %}
+    </div>
+    <span class="datatable-info">
+        {% if page_obj.paginator.count > 0 %}
+        {% blocktrans with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}Showing {{ start }}-{{ end }} of {{ total }}{% endblocktrans %}
+        {% endif %}
+    </span>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="pagination pagination-sm">
+        <button class="pagination-btn pagination-prev" {% if page_obj.has_previous %}hx-get="{% url 'leads:loss_reasons_list' %}?page={{ page_obj.previous_page_number }}" hx-target="#datatable-body" hx-include="#loss_reasons-datatable"{% else %}disabled{% endif %}>
+            {% icon "chevron-back-outline" %}
+        </button>
+        {% for num in page_obj.paginator.page_range %}
+        <button class="pagination-btn{% if num == page_obj.number %} pagination-active{% endif %}" hx-get="{% url 'leads:loss_reasons_list' %}?page={{ num }}" hx-target="#datatable-body" hx-include="#loss_reasons-datatable">{{ num }}</button>
+        {% endfor %}
+        <button class="pagination-btn pagination-next" {% if page_obj.has_next %}hx-get="{% url 'leads:loss_reasons_list' %}?page={{ page_obj.next_page_number }}" hx-target="#datatable-body" hx-include="#loss_reasons-datatable"{% else %}disabled{% endif %}>
+            {% icon "chevron-forward-outline" %}
+        </button>
+    </nav>
+    {% endif %}
+</div>
+
+{% else %}
+<div class="datatable-empty">
+    <div class="datatable-empty-icon">{% icon "cube-outline" %}</div>
+    <div class="datatable-empty-title">{% trans "No items yet" %}</div>
+    <div class="datatable-empty-text">{% trans "Add your first item to get started" %}</div>
+    <button class="btn color-primary mt-4" @click="openPanel('{% url 'leads:loss_reason_add' %}')">
+        {% icon "add-outline" %} {% trans "Add" %}
+    </button>
+</div>
+{% endif %}

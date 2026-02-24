@@ -1,0 +1,50 @@
+{% load djicons i18n %}
+
+<div class="side-sheet-header">
+    <h3 class="sheet-title">{% trans "Add Lossreason" %}</h3>
+    <button class="sheet-close" @click="closePanel()">{% icon "close-outline" %}</button>
+</div>
+
+<div class="side-sheet-content">
+    <form id="add-loss_reason-form"
+          hx-post="{% url 'leads:loss_reason_add' %}"
+          hx-target="#datatable-body"
+          hx-swap="innerHTML"
+          @htmx:after-request="closePanel()"
+          class="flex flex-col gap-4 p-6">
+        {% csrf_token %}
+
+        {% if error %}
+        <div class="callout callout-error">
+            <div class="callout-content"><span class="callout-text">{{ error }}</span></div>
+        </div>
+        {% endif %}
+
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Name" %}</label>
+            <input type="text" name="name" class="input input-sm w-full" placeholder="{% trans 'Name' %}">
+        </div>
+
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Is Active" %}</label>
+            <label class="toggle color-success">
+                <input type="checkbox" name="is_active">
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+        </div>
+
+        <div>
+            <label class="text-sm font-medium mb-1 block">{% trans "Sort Order" %}</label>
+            <input type="number" name="sort_order" class="input input-sm w-full"  placeholder="0">
+        </div>
+    </form>
+</div>
+
+<div class="side-sheet-footer">
+    <div class="flex justify-end gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="closePanel()">{% trans "Cancel" %}</button>
+        <button type="submit" form="add-loss_reason-form" class="btn btn-sm color-primary">
+            {% icon "add-outline" %} {% trans "Add" %}
+        </button>
+    </div>
+</div>
