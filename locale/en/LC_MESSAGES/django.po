@@ -1,0 +1,385 @@
+# English translations for Leads
+# Copyright (C) 2025
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-25 00:00+0000\n"
+"PO-Revision-Date: 2026-02-25 00:00+0000\n"
+"Last-Translator: ERPlora Team <info@erplora.com>\n"
+"Language: en\n"
+"Language-Team: English\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: module.py
+msgid "Leads"
+msgstr "Leads"
+
+msgid "Sales pipeline and lead management with visual Kanban board"
+msgstr "Sales pipeline and lead management with visual Kanban board"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Pipeline"
+msgstr "Pipeline"
+
+msgid "Settings"
+msgstr "Settings"
+
+#: models.py - SOURCE_CHOICES
+msgid "Manual"
+msgstr "Manual"
+
+msgid "Website"
+msgstr "Website"
+
+msgid "Referral"
+msgstr "Referral"
+
+msgid "Campaign"
+msgstr "Campaign"
+
+msgid "Social Media"
+msgstr "Social Media"
+
+msgid "Import"
+msgstr "Import"
+
+msgid "Walk-in"
+msgstr "Walk-in"
+
+msgid "Phone Call"
+msgstr "Phone Call"
+
+msgid "Other"
+msgstr "Other"
+
+#: models.py - PRIORITY_CHOICES
+msgid "Low"
+msgstr "Low"
+
+msgid "Medium"
+msgstr "Medium"
+
+msgid "High"
+msgstr "High"
+
+msgid "Urgent"
+msgstr "Urgent"
+
+#: models.py - STATUS_CHOICES
+msgid "Open"
+msgstr "Open"
+
+msgid "Won"
+msgstr "Won"
+
+msgid "Lost"
+msgstr "Lost"
+
+#: models.py - ACTIVITY_TYPE_CHOICES
+msgid "Note"
+msgstr "Note"
+
+msgid "Call"
+msgstr "Call"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Meeting"
+msgstr "Meeting"
+
+msgid "Stage Change"
+msgstr "Stage Change"
+
+msgid "Status Change"
+msgstr "Status Change"
+
+#: models.py - STAGE_COLORS
+msgid "Primary"
+msgstr "Primary"
+
+msgid "Secondary"
+msgstr "Secondary"
+
+msgid "Success"
+msgstr "Success"
+
+msgid "Warning"
+msgstr "Warning"
+
+msgid "Danger"
+msgstr "Danger"
+
+msgid "Info"
+msgstr "Info"
+
+#: models.py - Pipeline
+msgid "Name"
+msgstr "Name"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Default Pipeline"
+msgstr "Default Pipeline"
+
+msgid "Active"
+msgstr "Active"
+
+#: models.py - PipelineStage
+msgid "Order"
+msgstr "Order"
+
+msgid "Probability (%)"
+msgstr "Probability (%)"
+
+msgid "Win probability percentage (0-100)"
+msgstr "Win probability percentage (0-100)"
+
+msgid "Color"
+msgstr "Color"
+
+msgid "Won Stage"
+msgstr "Won Stage"
+
+msgid "Leads moved here are automatically marked as won"
+msgstr "Leads moved here are automatically marked as won"
+
+msgid "Lost Stage"
+msgstr "Lost Stage"
+
+msgid "Leads moved here are automatically marked as lost"
+msgstr "Leads moved here are automatically marked as lost"
+
+#: models.py - LossReason
+msgid "Sort Order"
+msgstr "Sort Order"
+
+#: models.py - Lead
+msgid "Phone"
+msgstr "Phone"
+
+msgid "Company"
+msgstr "Company"
+
+msgid "Expected Value"
+msgstr "Expected Value"
+
+msgid "Expected Close Date"
+msgstr "Expected Close Date"
+
+msgid "Assigned To"
+msgstr "Assigned To"
+
+msgid "UUID of the assigned user"
+msgstr "UUID of the assigned user"
+
+msgid "Customer"
+msgstr "Customer"
+
+msgid "Source"
+msgstr "Source"
+
+msgid "Priority"
+msgstr "Priority"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Won Date"
+msgstr "Won Date"
+
+msgid "Lost Date"
+msgstr "Lost Date"
+
+msgid "Loss Reason"
+msgstr "Loss Reason"
+
+msgid "Stage Changed At"
+msgstr "Stage Changed At"
+
+#: models.py - Lead methods
+msgid "Lead marked as won"
+msgstr "Lead marked as won"
+
+msgid "Lead marked as lost"
+msgstr "Lead marked as lost"
+
+msgid "Stage changed from %(old)s to %(new)s"
+msgstr "Stage changed from %(old)s to %(new)s"
+
+msgid "Lead converted to customer: %(name)s"
+msgstr "Lead converted to customer: %(name)s"
+
+#: models.py - LeadActivity
+msgid "Lead"
+msgstr "Lead"
+
+msgid "Activity Type"
+msgstr "Activity Type"
+
+msgid "Metadata"
+msgstr "Metadata"
+
+#: models.py - LeadSettings
+msgid "Auto-create Customer on Win"
+msgstr "Auto-create Customer on Win"
+
+msgid "Automatically create a customer record when a lead is won"
+msgstr "Automatically create a customer record when a lead is won"
+
+msgid "Default Source"
+msgstr "Default Source"
+
+msgid "Lead Settings"
+msgstr "Lead Settings"
+
+#: models.py - Default pipeline data
+msgid "Sales Pipeline"
+msgstr "Sales Pipeline"
+
+msgid "Default sales pipeline"
+msgstr "Default sales pipeline"
+
+msgid "New"
+msgstr "New"
+
+msgid "Contacted"
+msgstr "Contacted"
+
+msgid "Qualified"
+msgstr "Qualified"
+
+msgid "Proposal"
+msgstr "Proposal"
+
+msgid "Negotiation"
+msgstr "Negotiation"
+
+#: templates
+msgid "Add Lead"
+msgstr "Add Lead"
+
+msgid "email@example.com"
+msgstr "email@example.com"
+
+msgid "+34 600 000 000"
+msgstr "+34 600 000 000"
+
+msgid "Company name"
+msgstr "Company name"
+
+msgid "Value"
+msgstr "Value"
+
+msgid "Expected Close"
+msgstr "Expected Close"
+
+msgid "Stage"
+msgstr "Stage"
+
+msgid "Link to Customer"
+msgstr "Link to Customer"
+
+msgid "None"
+msgstr "None"
+
+msgid "Additional notes..."
+msgstr "Additional notes..."
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Lead name"
+msgstr "Lead name"
+
+msgid "Lead Details"
+msgstr "Lead Details"
+
+msgid "Pipeline / Stage"
+msgstr "Pipeline / Stage"
+
+msgid "Linked Customer"
+msgstr "Linked Customer"
+
+msgid "Add Activity"
+msgstr "Add Activity"
+
+msgid "Hide"
+msgstr "Hide"
+
+msgid "Show"
+msgstr "Show"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Describe the activity..."
+msgstr "Describe the activity..."
+
+msgid "Activity Timeline"
+msgstr "Activity Timeline"
+
+msgid "ago"
+msgstr "ago"
+
+msgid "No activities yet"
+msgstr "No activities yet"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Mark as Won"
+msgstr "Mark as Won"
+
+msgid "Mark as Lost"
+msgstr "Mark as Lost"
+
+msgid "Convert to Customer"
+msgstr "Convert to Customer"
+
+msgid "Move Stage"
+msgstr "Move Stage"
+
+msgid "probability"
+msgstr "probability"
+
+msgid "Created"
+msgstr "Created"
+
+msgid "Days Open"
+msgstr "Days Open"
+
+msgid "Days in Stage"
+msgstr "Days in Stage"
+
+msgid "Mark Lost"
+msgstr "Mark Lost"
+
+msgid "Why was this lead lost?"
+msgstr "Why was this lead lost?"
+
+msgid "Select a reason..."
+msgstr "Select a reason..."
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "View"
+msgstr "View"
+
+msgid "Mark Won"
+msgstr "Mark Won"
+
+msgid "Delete"
+msgstr "Delete"
