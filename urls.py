@@ -7,6 +7,11 @@ urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
 
+    # Navigation tab aliases
+    path('pipeline/', views.pipelines_list, name='pipeline'),
+    path('list/', views.loss_reasons_list, name='list'),
+
+
     # Pipeline
     path('pipelines/', views.pipelines_list, name='pipelines_list'),
     path('pipelines/add/', views.pipeline_add, name='pipeline_add'),
