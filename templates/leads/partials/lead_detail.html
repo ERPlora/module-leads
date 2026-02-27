@@ -1,18 +1,13 @@
 {% load djicons i18n %}
+<div data-back-url="{% url 'leads:list' %}" hidden></div>
 
 <div class="p-4" x-data="{
     lostModal: false,
     activityForm: false,
 }">
 
-    <!-- Header with back button -->
+    <!-- Header -->
     <div class="flex items-center gap-4 mb-6">
-        <button class="btn btn-ghost btn-sm btn-circle"
-                hx-get="{% url 'leads:list' %}"
-                hx-target="#main-content-area"
-                hx-push-url="true">
-            {% icon "arrow-back-outline" %}
-        </button>
         <div class="flex-1">
             <h2 class="text-xl font-semibold">{{ lead.name }}</h2>
             <div class="text-sm text-base-content/60">
