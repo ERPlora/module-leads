@@ -15,36 +15,32 @@
                         <span class="checkbox-mark"></span>
                     </label>
                 </th>
-                <th class="datatable-th datatable-th-sortable{% if sort_field == 'name' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                <th class="cursor-pointer datatable-th datatable-th-sortable{% if sort_field == 'name' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
                     hx-get="{% url 'leads:list' %}?sort=name&dir={% if sort_field == 'name' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
                     hx-target="#datatable-body"
-                    hx-include="#leads-datatable"
-                    style="cursor: pointer;">
+                    hx-include="#leads-datatable">
                     {% trans "Lead" %}
                     <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
                 </th>
-                <th class="datatable-th datatable-th-sortable{% if sort_field == 'company' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                <th class="cursor-pointer datatable-th datatable-th-sortable{% if sort_field == 'company' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
                     hx-get="{% url 'leads:list' %}?sort=company&dir={% if sort_field == 'company' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
                     hx-target="#datatable-body"
-                    hx-include="#leads-datatable"
-                    style="cursor: pointer;">
+                    hx-include="#leads-datatable">
                     {% trans "Company" %}
                     <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
                 </th>
-                <th class="datatable-th datatable-th-sortable{% if sort_field == 'value' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                <th class="cursor-pointer datatable-th datatable-th-sortable{% if sort_field == 'value' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
                     hx-get="{% url 'leads:list' %}?sort=value&dir={% if sort_field == 'value' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
                     hx-target="#datatable-body"
-                    hx-include="#leads-datatable"
-                    style="cursor: pointer;">
+                    hx-include="#leads-datatable">
                     {% trans "Value" %}
                     <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
                 </th>
                 <th class="datatable-th">{% trans "Stage" %}</th>
-                <th class="datatable-th datatable-th-sortable{% if sort_field == 'priority' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
+                <th class="cursor-pointer datatable-th datatable-th-sortable{% if sort_field == 'priority' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
                     hx-get="{% url 'leads:list' %}?sort=priority&dir={% if sort_field == 'priority' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}"
                     hx-target="#datatable-body"
-                    hx-include="#leads-datatable"
-                    style="cursor: pointer;">
+                    hx-include="#leads-datatable">
                     {% trans "Priority" %}
                     <span class="datatable-sort-icon">{% icon "chevron-up-outline" %}</span>
                 </th>
