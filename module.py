@@ -33,3 +33,20 @@ PERMISSIONS = [
     'leads.convert_lead',
     'leads.manage_settings',
 ]
+
+ROLE_PERMISSIONS = {
+    "admin": ["*"],
+    "manager": [
+        "add_lead",
+        "change_lead",
+        "convert_lead",
+        "manage_pipeline",
+        "view_lead",
+        "view_pipeline",
+    ],
+    "employee": [
+        "add_lead",
+        "view_lead",
+        "view_pipeline",
+    ],
+}
