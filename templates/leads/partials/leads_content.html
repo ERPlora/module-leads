@@ -1,7 +1,6 @@
 {% load djicons i18n %}
 
 <div x-data="{
-    panelOpen: false,
     selectedIds: [],
     selectAll: false,
     deleteConfirm: false,
@@ -20,13 +19,6 @@
         this.selectAll = !this.selectAll;
     },
     clearSelection() { this.selectedIds = []; this.selectAll = false; },
-    openPanel(url) {
-        htmx.ajax('GET', url, { target: '#lead-panel-content', swap: 'innerHTML' });
-        this.panelOpen = true;
-    },
-    closePanel() {
-        this.panelOpen = false;
-    },
     confirmDelete() {
         if (this.deleteTarget) {
             htmx.ajax('POST', this.deleteTarget.url, {
@@ -106,7 +98,7 @@
             </div>
             <div class="datatable-toolbar-end">
                 <button class="btn btn-sm btn-circle color-primary"
-                        @click="openPanel('{% url 'leads:add' %}')"
+                        hx-get="{% url 'leads:add' %}" hx-target="#main-content-area" hx-push-url="true"
                         title="{% trans 'Add Lead' %}">
                     {% icon "add-outline" %}
                 </button>
@@ -127,7 +119,7 @@
                                 swap: 'innerHTML',
                                 headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}' }
                             });
-                        }); clearSelection();">
+                        }, clearSelection();">
                     {% icon "trash-outline" %}
                     {% trans "Delete" %}
                 </button>
@@ -149,12 +141,6 @@
             {% include "leads/partials/leads_list.html" %}
         </div>
     </div>
-
-    <!-- Side Sheet -->
-    <div class="sheet-backdrop" :class="{ 'is-open': panelOpen }" @click.self="closePanel()">
-        <div class="side-sheet side-sheet-right" id="lead-panel-content">
-            <!-- Content loaded via HTMX -->
-        </div>
     </div>
 
     <!-- Delete Confirmation Modal -->

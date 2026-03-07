@@ -37,7 +37,7 @@
                     </label>
                 </td>
                 <td class="datatable-td">
-                    <span class="font-medium cursor-pointer" @click="openPanel('{% url 'leads:loss_reason_edit' item.id %}')">{{ item.name }}</span>
+                    <span class="font-medium cursor-pointer" hx-get="{% url 'leads:loss_reason_edit' item.id %}" hx-target="#main-content-area" hx-push-url="true">{{ item.name }}</span>
                 </td>
                 <td class="datatable-td datatable-td-center" onclick="event.stopPropagation();">
                     <label class="toggle toggle-sm color-success">
@@ -50,7 +50,7 @@
                 <td class="datatable-td">{{ item.sort_order }}</td>
                 <td class="datatable-td datatable-td-actions" onclick="event.stopPropagation();">
                     <div class="datatable-row-actions">
-                        <button class="datatable-row-action" @click="openPanel('{% url 'leads:loss_reason_edit' item.id %}')" title="{% trans 'Edit' %}">
+                        <button class="datatable-row-action" hx-get="{% url 'leads:loss_reason_edit' item.id %}" hx-target="#main-content-area" hx-push-url="true" title="{% trans 'Edit' %}">
                             {% icon "create-outline" %}
                         </button>
                         <button class="datatable-row-action datatable-row-action-danger"
@@ -102,7 +102,7 @@
     <div class="datatable-empty-icon">{% icon "cube-outline" %}</div>
     <div class="datatable-empty-title">{% trans "No items yet" %}</div>
     <div class="datatable-empty-text">{% trans "Add your first item to get started" %}</div>
-    <button class="btn color-primary mt-4" @click="openPanel('{% url 'leads:loss_reason_add' %}')">
+    <button class="btn color-primary mt-4" hx-get="{% url 'leads:loss_reason_add' %}" hx-target="#main-content-area" hx-push-url="true">
         {% icon "add-outline" %} {% trans "Add" %}
     </button>
 </div>

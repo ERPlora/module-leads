@@ -3,6 +3,8 @@ Leads Module Views
 """
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.http import HttpResponse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, render as django_render
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -112,6 +114,7 @@ def pipelines_list(request):
     }
 
 @login_required
+@htmx_view('leads/pages/pipeline_add.html', 'leads/partials/pipeline_add_content.html')
 def pipeline_add(request):
     hub_id = request.session.get('hub_id')
     if request.method == 'POST':
@@ -125,10 +128,13 @@ def pipeline_add(request):
         obj.is_default = is_default
         obj.is_active = is_active
         obj.save()
-        return _render_pipelines_list(request, hub_id)
-    return django_render(request, 'leads/partials/panel_pipeline_add.html', {})
+        response = HttpResponse(status=204)
+        response['HX-Redirect'] = reverse('leads:pipelines_list')
+        return response
+    return {}
 
 @login_required
+@htmx_view('leads/pages/pipeline_edit.html', 'leads/partials/pipeline_edit_content.html')
 def pipeline_edit(request, pk):
     hub_id = request.session.get('hub_id')
     obj = get_object_or_404(Pipeline, pk=pk, hub_id=hub_id, is_deleted=False)
@@ -139,7 +145,7 @@ def pipeline_edit(request, pk):
         obj.is_active = request.POST.get('is_active') == 'on'
         obj.save()
         return _render_pipelines_list(request, hub_id)
-    return django_render(request, 'leads/partials/panel_pipeline_edit.html', {'obj': obj})
+    return {'obj': obj}
 
 @login_required
 @require_POST
@@ -254,6 +260,7 @@ def loss_reasons_list(request):
     }
 
 @login_required
+@htmx_view('leads/pages/loss_reason_add.html', 'leads/partials/loss_reason_add_content.html')
 def loss_reason_add(request):
     hub_id = request.session.get('hub_id')
     if request.method == 'POST':
@@ -266,9 +273,10 @@ def loss_reason_add(request):
         obj.sort_order = sort_order
         obj.save()
         return _render_loss_reasons_list(request, hub_id)
-    return django_render(request, 'leads/partials/panel_loss_reason_add.html', {})
+    return {}
 
 @login_required
+@htmx_view('leads/pages/loss_reason_edit.html', 'leads/partials/loss_reason_edit_content.html')
 def loss_reason_edit(request, pk):
     hub_id = request.session.get('hub_id')
     obj = get_object_or_404(LossReason, pk=pk, hub_id=hub_id, is_deleted=False)
@@ -278,7 +286,7 @@ def loss_reason_edit(request, pk):
         obj.sort_order = int(request.POST.get('sort_order', 0) or 0)
         obj.save()
         return _render_loss_reasons_list(request, hub_id)
-    return django_render(request, 'leads/partials/panel_loss_reason_edit.html', {'obj': obj})
+    return {'obj': obj}
 
 @login_required
 @require_POST

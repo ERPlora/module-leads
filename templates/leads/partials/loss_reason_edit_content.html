@@ -1,0 +1,53 @@
+{% load djicons i18n %}
+<div data-back-url="{% url 'leads:loss_reasons_list' %}" hidden></div>
+
+<div class="p-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">{% trans "Edit Lossreason" %}</h1>
+        <div class="flex gap-2">
+            <a class="btn btn-ghost btn-sm"
+               hx-get="{% url 'leads:loss_reasons_list' %}"
+               hx-target="#main-content-area"
+               hx-push-url="true">
+                {% trans "Cancel" %}
+            </a>
+            <button type="submit" form="edit-loss_reason-form" class="btn btn-sm color-primary">
+                {% icon "checkmark-outline" %}
+                {% trans "Save" %}
+            </button>
+        </div>
+    </div>
+
+        {% if error %}
+        <div class="callout callout-error">
+            <div class="callout-content"><span class="callout-text">{{ error }}</span></div>
+        </div>
+        {% endif %}
+    <!-- Form -->
+    <form id="edit-loss_reason-form"
+          hx-post="{% url 'leads:loss_reason_edit' obj.id %}" class="max-w-2xl">
+        {% csrf_token %}
+        <div class="card mb-4">
+            <div class="card-body flex flex-col gap-4">
+                <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Name" %}</label>
+                <input type="text" name="name" class="input input-sm w-full" value="{{ obj.name }}">
+                </div>
+
+                <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Is Active" %}</label>
+                <label class="toggle color-success">
+                <input type="checkbox" name="is_active" {% if obj.is_active %}checked{% endif %}>
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+                </div>
+
+                <div>
+                <label class="text-sm font-medium mb-1 block">{% trans "Sort Order" %}</label>
+                <input type="number" name="sort_order" class="input input-sm w-full" value="{{ obj.sort_order }}">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
