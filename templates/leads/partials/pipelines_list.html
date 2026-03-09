@@ -6,9 +6,9 @@
         <thead class="datatable-thead">
             <tr>
                 <th class="datatable-th datatable-th-checkbox">
-                    <label class="checkbox-input">
-                        <input type="checkbox" :checked="selectAll" @click="toggleAll([{% for item in pipelines %}'{{ item.id }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
-                        <span class="checkbox-mark"></span>
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox" class="checkbox-input" :checked="selectAll" @click="toggleAll([{% for item in pipelines %}'{{ item.id }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
+                        <span class="checkbox-box"><svg class="checkbox-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                     </label>
                 </th>
                 <th class="cursor-pointer datatable-th datatable-th-sortable{% if sort_field == 'name' %} datatable-th-sorted{% if sort_dir == 'desc' %} datatable-th-sorted-desc{% endif %}{% endif %}"
@@ -37,9 +37,9 @@
             {% for item in pipelines %}
             <tr class="datatable-tr" data-id="{{ item.id }}" :class="{ 'datatable-tr-selected': selectedIds.includes('{{ item.id }}') }">
                 <td class="datatable-td datatable-td-checkbox" onclick="event.stopPropagation();">
-                    <label class="checkbox-input">
-                        <input type="checkbox" :checked="selectedIds.includes('{{ item.id }}')" @click="toggleSelect('{{ item.id }}')">
-                        <span class="checkbox-mark"></span>
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox" class="checkbox-input" :checked="selectedIds.includes('{{ item.id }}')" @click="toggleSelect('{{ item.id }}')">
+                        <span class="checkbox-box"><svg class="checkbox-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                     </label>
                 </td>
                 <td class="datatable-td">
@@ -79,7 +79,7 @@
 <div class="datatable-footer">
     <div class="datatable-per-page">
         {% trans "Show" %}
-        <select name="per_page" hx-get="{% url 'leads:pipelines_list' %}" hx-target="#datatable-body" hx-include="#pipelines-datatable" hx-trigger="change">
+        <select name="per_page" class="select select-sm" hx-get="{% url 'leads:pipelines_list' %}" hx-target="#datatable-body" hx-include="#pipelines-datatable" hx-trigger="change">
             <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
             <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
             <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
