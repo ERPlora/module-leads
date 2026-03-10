@@ -17,7 +17,7 @@ from apps.modules_runtime.navigation import with_module_nav
 
 from .models import Pipeline, PipelineStage, LossReason, Lead, LeadActivity, LeadSettings
 
-PER_PAGE_CHOICES = [10, 25, 50, 100]
+PER_PAGE_CHOICES = [12, 24, 48, 96, 0]
 
 
 # ======================================================================
@@ -49,7 +49,7 @@ PIPELINE_SORT_FIELDS = {
 
 def _build_pipelines_context(hub_id, per_page=10):
     qs = Pipeline.objects.filter(hub_id=hub_id, is_deleted=False).order_by('name')
-    paginator = Paginator(qs, per_page)
+    paginator = Paginator(qs, per_page if per_page > 0 else max(qs.count(), 1))
     page_obj = paginator.get_page(1)
     return {
         'pipelines': page_obj,
@@ -75,9 +75,9 @@ def pipelines_list(request):
     sort_dir = request.GET.get('dir', 'asc')
     page_number = request.GET.get('page', 1)
     current_view = request.GET.get('view', 'table')
-    per_page = int(request.GET.get('per_page', 10))
+    per_page = int(request.GET.get('per_page', 12))
     if per_page not in PER_PAGE_CHOICES:
-        per_page = 10
+        per_page = 12
 
     qs = Pipeline.objects.filter(hub_id=hub_id, is_deleted=False)
 
@@ -97,7 +97,7 @@ def pipelines_list(request):
             return export_to_csv(qs, fields=fields, headers=headers, filename='pipelines.csv')
         return export_to_excel(qs, fields=fields, headers=headers, filename='pipelines.xlsx')
 
-    paginator = Paginator(qs, per_page)
+    paginator = Paginator(qs, per_page if per_page > 0 else max(qs.count(), 1))
     page_obj = paginator.get_page(page_number)
 
     if request.htmx and request.htmx.target == 'datatable-body':
@@ -195,7 +195,7 @@ LOSS_REASON_SORT_FIELDS = {
 
 def _build_loss_reasons_context(hub_id, per_page=10):
     qs = LossReason.objects.filter(hub_id=hub_id, is_deleted=False).order_by('name')
-    paginator = Paginator(qs, per_page)
+    paginator = Paginator(qs, per_page if per_page > 0 else max(qs.count(), 1))
     page_obj = paginator.get_page(1)
     return {
         'loss_reasons': page_obj,
@@ -221,9 +221,9 @@ def loss_reasons_list(request):
     sort_dir = request.GET.get('dir', 'asc')
     page_number = request.GET.get('page', 1)
     current_view = request.GET.get('view', 'table')
-    per_page = int(request.GET.get('per_page', 10))
+    per_page = int(request.GET.get('per_page', 12))
     if per_page not in PER_PAGE_CHOICES:
-        per_page = 10
+        per_page = 12
 
     qs = LossReason.objects.filter(hub_id=hub_id, is_deleted=False)
 
@@ -243,7 +243,7 @@ def loss_reasons_list(request):
             return export_to_csv(qs, fields=fields, headers=headers, filename='loss_reasons.csv')
         return export_to_excel(qs, fields=fields, headers=headers, filename='loss_reasons.xlsx')
 
-    paginator = Paginator(qs, per_page)
+    paginator = Paginator(qs, per_page if per_page > 0 else max(qs.count(), 1))
     page_obj = paginator.get_page(page_number)
 
     if request.htmx and request.htmx.target == 'datatable-body':
